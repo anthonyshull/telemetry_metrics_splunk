@@ -10,7 +10,7 @@ by adding `telemetry_metrics_splunk` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:telemetry_metrics_splunk, "~> 0.1.0"}
+    {:telemetry_metrics_splunk, "~> 0.0.1"}
   ]
 end
 ```
