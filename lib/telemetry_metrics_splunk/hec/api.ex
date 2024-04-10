@@ -1,6 +1,5 @@
 defmodule TelemetryMetricsSplunk.Hec.Api do
-  @moduledoc """
-  """
+  @moduledoc false
 
   require Logger
 
@@ -20,7 +19,7 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
         Logger.debug("#{__MODULE__} response_code=#{result |> elem(0) |> elem(1)}")
 
       {:error, reason} ->
-        Logger.warning("#{__MODULE__} error=#{Kernel.elem(reason, 0)}")
+        Logger.warning("#{__MODULE__} error=#{elem(reason, 0)}")
     end
   end
 end

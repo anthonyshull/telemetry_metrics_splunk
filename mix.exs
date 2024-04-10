@@ -22,6 +22,7 @@ defmodule TelemetryMetricsSplunk.MixProject do
   defp deps do
     [
       {:bypass, "2.1.0", only: [:test]},
+      {:credo, "1.7.5", only: [:dev]},
       {:jason, "1.4.1"},
       {:telemetry, "1.2.1"},
       {:telemetry_metrics, "1.0.0"}

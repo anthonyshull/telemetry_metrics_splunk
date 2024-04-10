@@ -1,7 +1,5 @@
 defmodule TelemetryMetricsSplunk do
-  @moduledoc """
-  Documentation for `TelemetryMetricsSplunk`.
-  """
+  @moduledoc false
 
   require Logger
 
@@ -98,8 +96,7 @@ defmodule TelemetryMetricsSplunk do
 
   defp metric_name(event_name) do
     event_name
-    |> Enum.map(&Atom.to_string/1)
-    |> Enum.join("_")
+    |> Enum.map_join("_", &Atom.to_string/1)
     |> String.downcase()
   end
 
