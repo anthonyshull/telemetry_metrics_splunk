@@ -1,5 +1,5 @@
 defmodule TelemetryMetricsSplunkTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Telemetry.Metrics
 
@@ -10,28 +10,26 @@ defmodule TelemetryMetricsSplunkTest do
   ]
 
   setup do
-    children = [
-      {
-        Plug.Cowboy,
-        [
-          scheme: :http,
-          plug: TelemetryMetricsSplunk.Hec.Mock,
-          options: [port: @port]
-        ]
-      }
-    ]
-    options = [strategy: :one_for_one, name: __MODULE__]
+    bypass = Bypass.open(port: @port)
 
-    Supervisor.start_link(children, options)
-
-    :ok
+    {:ok, bypass: bypass}
   end
 
-  test "greets the world" do
+  test "sends the metric to splunk", %{bypass: bypass} do
+    metric = :rand.uniform(999)
+
     @options
-    |> Keyword.put(:metrics, [Metrics.last_value("foo.bar.baz"), Metrics.last_value("foo.bar.bop")])
+    |> Keyword.put(:metrics, [Metrics.last_value("foo.bar.baz")])
     |> TelemetryMetricsSplunk.start_link()
 
-    :telemetry.execute([:foo, :bar], %{baz: :rand.uniform(999), bop: :rand.uniform(999)})
+    Bypass.expect_once(bypass, "POST", "/services/collector", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn, read_timeout: 500)
+      data = Jason.decode!(body)
+      assert data["foo_bar:baz"] == metric
+
+      Plug.Conn.resp(conn, 200, "ok")
+    end)
+
+    :telemetry.execute([:foo, :bar], %{baz: metric})
   end
 end

@@ -11,9 +11,9 @@ defmodule TelemetryMetricsSplunk do
   alias TelemetryMetricsSplunk.Hec.Api
 
   @type option ::
-    {:url, String.t()}
-    | {:token, String.t()}
-    | {:metrics, [Metrics.t()]}
+          {:url, String.t()}
+          | {:token, String.t()}
+          | {:metrics, [Metrics.t()]}
   @type options :: [option()]
 
   @doc """
@@ -76,6 +76,13 @@ defmodule TelemetryMetricsSplunk do
     :ok
   end
 
+  @doc """
+  Handles a telemetry event by sending it to the Splunk HTTP Event Collector.
+
+  A metric like `Metrics.last_value("foo.bar.baz")` will be converted.
+  `foo_bar:baz` will be sent to Splunk where `foo_bar` is the metric name and `baz` is the dimension name.
+  This lines up with the telemetry execution of `:telemetry.execute([:foo, :bar], %{baz: 123})`.
+  """
   def handle_event(event_name, measurements, _metadata, options) do
     measurements
     |> Map.new(fn {k, v} -> {format_measurement(event_name, k), v} end)

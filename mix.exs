@@ -21,8 +21,8 @@ defmodule TelemetryMetricsSplunk.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:bypass, "2.1.0", only: [:test]},
       {:jason, "1.4.1"},
-      {:plug_cowboy, "2.7.1", only: [:test]},
       {:telemetry, "1.2.1"},
       {:telemetry_metrics, "1.0.0"}
     ]
