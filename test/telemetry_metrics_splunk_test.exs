@@ -18,9 +18,9 @@ defmodule TelemetryMetricsSplunkTest do
   test "sends the metric to splunk", %{bypass: bypass} do
     metric = :rand.uniform(999)
 
-    @options
-    |> Keyword.put(:metrics, [Metrics.last_value("foo.bar.baz")])
-    |> TelemetryMetricsSplunk.start_link()
+    options = Keyword.put(@options, :metrics, [Metrics.last_value("foo.bar.baz")])
+
+    Supervisor.start_link([{TelemetryMetricsSplunk, options}], [strategy: :one_for_one, name: __MODULE__])
 
     Bypass.expect_once(bypass, "POST", "/services/collector", fn conn ->
       {:ok, body, conn} = Plug.Conn.read_body(conn, read_timeout: 500)
