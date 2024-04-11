@@ -20,12 +20,13 @@ defmodule TelemetryMetricsSplunkTest do
 
     options = Keyword.put(@options, :metrics, [Metrics.last_value("foo.bar.baz")])
 
-    Supervisor.start_link([{TelemetryMetricsSplunk, options}], [strategy: :one_for_one, name: __MODULE__])
+    Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one, name: __MODULE__)
 
     Bypass.expect_once(bypass, "POST", "/services/collector", fn conn ->
       {:ok, body, conn} = Plug.Conn.read_body(conn, read_timeout: 500)
       data = Jason.decode!(body)
-      assert data["foo_bar:baz"] == metric
+
+      assert data["fields"]["metric_name:foo.bar.baz.last_value"] == metric
 
       Plug.Conn.resp(conn, 200, "ok")
     end)

@@ -1,13 +1,25 @@
 defmodule TelemetryMetricsSplunk.Hec.Api do
-  @moduledoc false
+  @moduledoc """
+  Sends metrics to the Splunk HTTP Event Collector (HEC).
+  """
 
   require Logger
 
-  def send(measurements, metrics: _, url: url, token: token) do
+  @doc """
+  Sends metrics to the Splunk HTTP Event Collector (HEC).
+
+  You must include the Splunk URL and Token in the options.
+  Metadata is optional and gets sent as dimensions.
+  """
+  @spec send(map(), TelemetryMetricsSplunk.options(), map()) :: :ok
+  def send(measurements, options, metadata \\ %{})
+
+  def send(measurements, [metrics: _, url: url, token: token], metadata) do
+    fields = Map.merge(measurements, metadata)
+
     data =
-      measurements
-      |> Map.put(:time, :erlang.system_time(:millisecond))
-      |> Map.put(:event, "metric")
+      %{event: "metric", time: :erlang.system_time(:millisecond)}
+      |> Map.put(:fields, fields)
       |> Jason.encode!()
 
     headers = [{~c"authorization", String.to_charlist("Splunk " <> token)}]
@@ -21,5 +33,9 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
       {:error, reason} ->
         Logger.warning("#{__MODULE__} error=#{elem(reason, 0)}")
     end
+  end
+
+  def send(measurements, [url: url, token: token], metadata) do
+    send(measurements, [metrics: [], url: url, token: token], metadata)
   end
 end

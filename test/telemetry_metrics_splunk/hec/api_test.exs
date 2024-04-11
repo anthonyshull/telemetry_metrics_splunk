@@ -3,7 +3,6 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
 
   import ExUnit.CaptureLog
 
-  alias Telemetry.Metrics
   alias TelemetryMetricsSplunk.Hec.Api
 
   @port 9999
@@ -29,9 +28,35 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
         Plug.Conn.resp(conn, 200, "ok")
       end)
 
-      options = Keyword.put(@options, :metrics, [Metrics.last_value("foo.bar")])
+      Api.send(%{"foo" => :rand.uniform(999)}, @options)
+    end
 
-      Api.send(%{"foo:bar" => :rand.uniform(999)}, options)
+    test "adds measurements to the payload", %{bypass: bypass} do
+      metric = :rand.uniform(999)
+
+      Bypass.expect_once(bypass, "POST", @route, fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn, read_timeout: 500)
+        data = Jason.decode!(body)
+
+        assert data["fields"]["metric_name:foo"] == metric
+
+        Plug.Conn.resp(conn, 200, "ok")
+      end)
+
+      Api.send(%{"metric_name:foo" => metric}, @options)
+    end
+
+    test "adds dimensions to the payload", %{bypass: bypass} do
+      Bypass.expect_once(bypass, "POST", @route, fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn, read_timeout: 500)
+        data = Jason.decode!(body)
+
+        assert data["fields"]["foo"] == "bar"
+
+        Plug.Conn.resp(conn, 200, "ok")
+      end)
+
+      Api.send(%{"foo" => :rand.uniform(999)}, @options, %{"foo" => "bar"})
     end
 
     test "logs when the request is successful", %{bypass: bypass} do
@@ -39,9 +64,7 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
         Plug.Conn.resp(conn, 200, "ok")
       end)
 
-      options = Keyword.put(@options, :metrics, [Metrics.last_value("foo.bar")])
-
-      {:ok, log} = with_log(fn -> Api.send(%{"foo:bar" => :rand.uniform(999)}, options) end)
+      {:ok, log} = with_log(fn -> Api.send(%{"foo" => :rand.uniform(999)}, @options) end)
 
       assert log =~ "response_code=200"
     end
@@ -49,9 +72,7 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
     test "logs when the request fails", %{bypass: bypass} do
       Bypass.down(bypass)
 
-      options = Keyword.put(@options, :metrics, [Metrics.last_value("foo.bar")])
-
-      {:ok, log} = with_log(fn -> Api.send(%{"foo:bar" => :rand.uniform(999)}, options) end)
+      {:ok, log} = with_log(fn -> Api.send(%{"foo" => :rand.uniform(999)}, @options) end)
 
       assert log =~ "error=failed_connect"
     end

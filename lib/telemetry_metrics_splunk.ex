@@ -1,5 +1,41 @@
 defmodule TelemetryMetricsSplunk do
-  @moduledoc false
+  @moduledoc """
+  `Telemetry.Metrics` reporter for Splunk metrics indexes using the Splunk HTTP Event Collector (HEC).
+  You must pass in the URL and Token as options along with metric definitions.
+
+  You can start the reporter with the `start_link/1` function:
+
+      alias Telemetry.Metrics
+
+      TelemetryMetricsSplunk.start_link(
+        url: "https://splunk.example.com:8088",
+        token: "00000000-0000-0000-0000-000000000000",
+        metrics: [
+          Metrics.counter("foo.bar.baz")
+        ]
+      )
+
+  In production, you should use a Supervisor in your application definition:
+
+      alias Telemetry.Metrics
+
+      children = [
+        {
+          TelemetryMetricsSplunk, [
+            url: "https://splunk.example.com:8088",
+            token: "00000000-0000-0000-0000-000000000000",
+            metrics: [
+              Metrics.counter("foo.bar.baz")
+            ]
+          ]
+        }
+      ]
+
+      Supervisor.start_link(children, strategy: :one_for_one)
+
+  Metric names are normalized so that calling `:telemetry.execute([:foo, :bar], %{baz: 1})` will send a metric named `foo.bar.baz.counter`
+  if you have a metric defined as `Metrics.counter("foo.bar.baz")`.
+  """
 
   require Logger
 
@@ -8,10 +44,7 @@ defmodule TelemetryMetricsSplunk do
   alias Telemetry.Metrics
   alias TelemetryMetricsSplunk.Hec.Api
 
-  @type option ::
-          {:url, String.t()}
-          | {:token, String.t()}
-          | {:metrics, [Metrics.t()]}
+  @type option :: {:url, String.t()} | {:token, String.t()} | {:metrics, [Metrics.t()]}
   @type options :: [option()]
 
   @doc """
@@ -19,9 +52,9 @@ defmodule TelemetryMetricsSplunk do
 
   This function allows you to start the reporter under a supervisor like this:
 
-      children = [
-        {TelemetryMetricsSplunk, options}
-      ]
+    children = [
+      {TelemetryMetricsSplunk, options}
+    ]
 
   See `start_link/1` for a list of available options.
   """
@@ -33,17 +66,15 @@ defmodule TelemetryMetricsSplunk do
   @doc """
   Starts a reporter and links it to the calling process.
 
-  ## Example
+    alias Telemetry.Metrics
 
-      alias Telemetry.Metrics
-
-      TelemetryMetricsSplunk.start_link(
-        url: "https://splunk.example.com:8088",
-        token: "00000000-0000-0000-0000-000000000000",
-        metrics: [
-          Metrics.counter("foo.bar.baz")
-        ]
-      )
+    TelemetryMetricsSplunk.start_link(
+      url: "https://splunk.example.com:8088",
+      token: "00000000-0000-0000-0000-000000000000",
+      metrics: [
+        Metrics.counter("foo.bar.baz")
+      ]
+    )
   """
   @spec start_link(options) :: GenServer.on_start()
   def start_link(options) do
@@ -51,6 +82,7 @@ defmodule TelemetryMetricsSplunk do
   end
 
   @impl GenServer
+  @spec init(options) :: {:ok, [{any(), any()}]}
   def init(options) do
     Process.flag(:trap_exit, true)
 
@@ -75,32 +107,46 @@ defmodule TelemetryMetricsSplunk do
   end
 
   @doc """
-  Handles a telemetry event by sending it to the Splunk HTTP Event Collector.
-
-  A metric like `Metrics.last_value("foo.bar.baz")` will be converted.
-  `foo_bar:baz` will be sent to Splunk where `foo_bar` is the metric name and `baz` is the dimension name.
-  This lines up with the telemetry execution of `:telemetry.execute([:foo, :bar], %{baz: 123})`.
+  Handles a telemetry event by normalizing it and sending it to the Splunk HEC.
   """
-  def handle_event(event_name, measurements, _metadata, options) do
-    measurements
-    |> Map.new(fn {k, v} -> {format_measurement(event_name, k), v} end)
-    |> Api.send(options)
+  @spec handle_event(any(), any(), map(), options) :: :ok
+  def handle_event(_event_name, measurements, metadata, options) do
+    options
+    |> Keyword.get(:metrics, [])
+    |> Enum.map(&format_metric(&1, measurements))
+    |> Map.new(fn {k, v} -> {k, v} end)
+    |> Api.send(options, metadata)
   end
 
-  defp dimension_name(event) do
+  defp format_metric(metric, measurements) do
+    %{event_name: event_name, measurement: measurement} = metric
+
+    measurements
+    |> Map.get(measurement, 0.0)
+    |> (fn value -> {format_measurement(event_name, measurement, metric), value} end).()
+  end
+
+  defp measurement_name(event) do
     event
     |> Atom.to_string()
-    |> String.replace(~r/_|\s/, ".")
     |> String.downcase()
   end
 
   defp metric_name(event_name) do
     event_name
-    |> Enum.map_join("_", &Atom.to_string/1)
+    |> Enum.map_join(".", &Atom.to_string/1)
     |> String.downcase()
   end
 
-  defp format_measurement(event_name, key) do
-    "#{metric_name(event_name)}:#{dimension_name(key)}"
+  defp metric_type(struct) do
+    struct.__struct__
+    |> Atom.to_string()
+    |> String.split(".")
+    |> List.last()
+    |> Recase.to_snake()
+  end
+
+  defp format_measurement(event_name, key, metric) do
+    "metric_name:#{metric_name(event_name)}.#{measurement_name(key)}.#{metric_type(metric)}"
   end
 end
