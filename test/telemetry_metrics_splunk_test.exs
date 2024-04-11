@@ -5,8 +5,8 @@ defmodule TelemetryMetricsSplunkTest do
 
   @port 9999
   @options [
-    url: "http://localhost:#{@port}/services/collector",
-    token: "00000000-0000-0000-0000-000000000000"
+    token: "00000000-0000-0000-0000-000000000000",
+    url: "http://localhost:#{@port}/services/collector"
   ]
 
   setup do

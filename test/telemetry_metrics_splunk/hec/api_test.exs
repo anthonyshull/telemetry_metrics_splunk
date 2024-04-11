@@ -8,8 +8,8 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
   @port 9999
   @route "/services/collector"
   @options [
-    url: "http://localhost:#{@port}#{@route}",
-    token: "00000000-0000-0000-0000-000000000000"
+    token: "00000000-0000-0000-0000-000000000000",
+    url: "http://localhost:#{@port}#{@route}"
   ]
 
   setup do
@@ -28,7 +28,7 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
         Plug.Conn.resp(conn, 200, "ok")
       end)
 
-      Api.send(%{"foo" => :rand.uniform(999)}, @options)
+      Api.send(%{"metric_name:foo" => :rand.uniform(999)}, @options)
     end
 
     test "adds measurements to the payload", %{bypass: bypass} do
@@ -56,7 +56,7 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
         Plug.Conn.resp(conn, 200, "ok")
       end)
 
-      Api.send(%{"foo" => :rand.uniform(999)}, @options, %{"foo" => "bar"})
+      Api.send(%{"metric_name:foo" => :rand.uniform(999)}, @options, %{"foo" => "bar"})
     end
 
     test "logs when the request is successful", %{bypass: bypass} do

@@ -14,7 +14,7 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
   @spec send(map(), TelemetryMetricsSplunk.options(), map()) :: :ok
   def send(measurements, options, metadata \\ %{})
 
-  def send(measurements, [metrics: _, url: url, token: token], metadata) do
+  def send(measurements, [metrics: _, token: token, url: url], metadata) do
     fields = Map.merge(measurements, metadata)
 
     data =
@@ -35,7 +35,7 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
     end
   end
 
-  def send(measurements, [url: url, token: token], metadata) do
-    send(measurements, [metrics: [], url: url, token: token], metadata)
+  def send(measurements, [token: token, url: url], metadata) do
+    send(measurements, [metrics: [], token: token, url: url], metadata)
   end
 end

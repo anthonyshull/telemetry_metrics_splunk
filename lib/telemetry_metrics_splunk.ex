@@ -1,35 +1,36 @@
 defmodule TelemetryMetricsSplunk do
   @moduledoc """
   `Telemetry.Metrics` reporter for Splunk metrics indexes using the Splunk HTTP Event Collector (HEC).
-  You must pass in the URL and Token as options along with metric definitions.
+
+  > **NOTE** All options are required and the order is enforced: `metrics`, `token`, `url`.
 
   You can start the reporter with the `start_link/1` function:
 
-      alias Telemetry.Metrics
+    alias Telemetry.Metrics
 
-      TelemetryMetricsSplunk.start_link(
-        url: "https://splunk.example.com:8088",
-        token: "00000000-0000-0000-0000-000000000000",
-        metrics: [
-          Metrics.counter("foo.bar.baz")
-        ]
-      )
+    TelemetryMetricsSplunk.start_link(
+      metrics: [
+        Metrics.counter("foo.bar.baz")
+      ],
+      token: "00000000-0000-0000-0000-000000000000",
+      url: "https://splunk.example.com:8088"
+    )
 
   In production, you should use a Supervisor in your application definition:
 
-      alias Telemetry.Metrics
+    alias Telemetry.Metrics
 
-      children = [
-        {
-          TelemetryMetricsSplunk, [
-            url: "https://splunk.example.com:8088",
-            token: "00000000-0000-0000-0000-000000000000",
-            metrics: [
-              Metrics.counter("foo.bar.baz")
-            ]
-          ]
-        }
-      ]
+    children = [
+      {
+        TelemetryMetricsSplunk, [
+          metrics: [
+            Metrics.counter("foo.bar.baz")
+          ],
+          token: "00000000-0000-0000-0000-000000000000",
+          url: "https://splunk.example.com:8088"
+        ]
+      }
+    ]
 
       Supervisor.start_link(children, strategy: :one_for_one)
 
@@ -44,7 +45,7 @@ defmodule TelemetryMetricsSplunk do
   alias Telemetry.Metrics
   alias TelemetryMetricsSplunk.Hec.Api
 
-  @type option :: {:url, String.t()} | {:token, String.t()} | {:metrics, [Metrics.t()]}
+  @type option :: {:metrics, [Metrics.t()]} | {:token, String.t()| {:url, String.t()}}
   @type options :: [option()]
 
   @doc """
@@ -69,11 +70,11 @@ defmodule TelemetryMetricsSplunk do
     alias Telemetry.Metrics
 
     TelemetryMetricsSplunk.start_link(
-      url: "https://splunk.example.com:8088",
-      token: "00000000-0000-0000-0000-000000000000",
       metrics: [
         Metrics.counter("foo.bar.baz")
       ]
+      token: "00000000-0000-0000-0000-000000000000",
+      url: "https://splunk.example.com:8088",
     )
   """
   @spec start_link(options) :: GenServer.on_start()
