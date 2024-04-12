@@ -4,10 +4,17 @@ defmodule TelemetryMetricsSplunk.MixProject do
   def project do
     [
       app: :telemetry_metrics_splunk,
-      version: "0.0.1",
+      version: "0.0.1-alpha",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+
+      name: "TelemetryMetricsSplunk",
+      source_url: "https://github.com/anthonyshull/telemetry_metrics_splunk",
+      docs: [
+        main: "TelemetryMetricsSplunk",
+        extras: ["README.md"]
+      ]
     ]
   end
 
@@ -23,6 +30,7 @@ defmodule TelemetryMetricsSplunk.MixProject do
     [
       {:bypass, "2.1.0", only: [:test]},
       {:credo, "1.7.5", only: [:dev], runtime: false},
+      {:ex_doc, "0.32.0", only: [:dev], runtime: false},
       {:dialyxir, "1.4.3", only: [:dev], runtime: false},
       {:jason, "1.4.1"},
       {:recase, "0.7.0"},

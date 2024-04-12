@@ -1,6 +1,27 @@
 defmodule TelemetryMetricsSplunk.Hec.Api do
   @moduledoc """
   Sends metrics to the Splunk HTTP Event Collector (HEC).
+
+  ```elixir
+  alias TelemetryMetricsSplunk.Hec.Api
+
+  measurements = %{
+    "vm.memory.total.summary" => 500
+  }
+
+  options = [
+    token: "00000000-0000-0000-0000-000000000000",
+    url: "https://example.splunkcloud.com:8088/services/collector"
+  ]
+
+  metadata = %{
+    "server" => "alpha"
+  }
+
+  Api.send(measurements, options, metadata)
+  ```
+
+  > **NOTE** Metadata is optional and gets sent as dimensions.
   """
 
   require Logger
@@ -13,9 +34,6 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
 
   @doc """
   Sends metrics to the Splunk HTTP Event Collector (HEC).
-
-  You must include the Splunk URL and Token in the options.
-  Metadata is optional and gets sent as dimensions.
   """
   @spec send(map(), TelemetryMetricsSplunk.options(), map()) :: :ok
   def send(measurements, options, metadata \\ %{})

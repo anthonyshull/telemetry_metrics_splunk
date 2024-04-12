@@ -6,36 +6,40 @@ defmodule TelemetryMetricsSplunk do
 
   You can start the reporter with the `start_link/1` function:
 
+  ```elixir
     alias Telemetry.Metrics
 
     TelemetryMetricsSplunk.start_link(
       metrics: [
-        Metrics.counter("foo.bar.baz")
+        Metrics.summary("vm.memory.total")
       ],
       token: "00000000-0000-0000-0000-000000000000",
-      url: "https://splunk.example.com:8088"
+      url: "https://example.splunkcloud.com:8088/services/collector"
     )
+  ```
 
   In production, you should use a Supervisor in your application definition:
 
+  ```elixir
     alias Telemetry.Metrics
 
     children = [
       {
         TelemetryMetricsSplunk, [
           metrics: [
-            Metrics.counter("foo.bar.baz")
+            Metrics.summary("vm.memory.total")
           ],
           token: "00000000-0000-0000-0000-000000000000",
-          url: "https://splunk.example.com:8088"
+          url: "https://example.splunkcloud.com:8088/services/collector"
         ]
       }
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)
+  ```
 
-  Metric names are normalized so that calling `:telemetry.execute([:foo, :bar], %{baz: 1})` will send a metric named `foo.bar.baz.counter`
-  if you have a metric defined as `Metrics.counter("foo.bar.baz")`.
+  Metric names are normalized so that calling `:telemetry.execute([:vm, :memory], %{total: 500})` will send a metric named `vm.memory.total.summary`
+  if you have a metric defined as `Metrics.summary("vm.memory.total")`.
   """
 
   require Logger
@@ -53,9 +57,11 @@ defmodule TelemetryMetricsSplunk do
 
   This function allows you to start the reporter under a supervisor like this:
 
+  ```elixir
     children = [
       {TelemetryMetricsSplunk, options}
     ]
+  ```
 
   See `start_link/1` for a list of available options.
   """
@@ -67,15 +73,17 @@ defmodule TelemetryMetricsSplunk do
   @doc """
   Starts a reporter and links it to the calling process.
 
+  ```elixir
     alias Telemetry.Metrics
 
     TelemetryMetricsSplunk.start_link(
       metrics: [
-        Metrics.counter("foo.bar.baz")
+        Metrics.summary("vm.memory.total")
       ]
       token: "00000000-0000-0000-0000-000000000000",
-      url: "https://splunk.example.com:8088",
+      url: "https://example.splunkcloud.com:8088/services/collector",
     )
+  ```
   """
   @spec start_link(options) :: GenServer.on_start()
   def start_link(options) do
