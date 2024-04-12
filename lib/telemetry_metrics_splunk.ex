@@ -32,7 +32,7 @@ defmodule TelemetryMetricsSplunk do
       }
     ]
 
-      Supervisor.start_link(children, strategy: :one_for_one)
+    Supervisor.start_link(children, strategy: :one_for_one)
 
   Metric names are normalized so that calling `:telemetry.execute([:foo, :bar], %{baz: 1})` will send a metric named `foo.bar.baz.counter`
   if you have a metric defined as `Metrics.counter("foo.bar.baz")`.

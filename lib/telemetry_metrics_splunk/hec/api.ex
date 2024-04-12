@@ -5,6 +5,12 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
 
   require Logger
 
+  @https_options [
+    ssl: [
+      verify: :verify_none
+    ]
+  ]
+
   @doc """
   Sends metrics to the Splunk HTTP Event Collector (HEC).
 
@@ -24,7 +30,7 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
 
     headers = [{~c"authorization", String.to_charlist("Splunk " <> token)}]
 
-    response = :httpc.request(:post, {String.to_charlist(url), headers, ~c"application/json", data}, [], [])
+    response = :httpc.request(:post, {String.to_charlist(url), headers, ~c"application/json", data}, @https_options, [])
 
     case response do
       {:ok, result} ->
