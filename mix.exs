@@ -1,19 +1,27 @@
 defmodule TelemetryMetricsSplunk.MixProject do
   use Mix.Project
 
+  @version "0.0.1-alpha"
+
   def project do
     [
       app: :telemetry_metrics_splunk,
-      version: "0.0.1-alpha",
+      version: @version,
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
 
       name: "TelemetryMetricsSplunk",
-      source_url: "https://github.com/anthonyshull/telemetry_metrics_splunk",
+      description: "Telemetry.Metrics reporter for Splunk metrics indexes using the Splunk HTTP Event Collector (HEC)",
       docs: [
         main: "TelemetryMetricsSplunk",
-        extras: ["README.md"]
+        canonical: "http://hexdocs.pm/telemetry_metrics_splunk",
+        source_url: "https://github.com/anthonyshull/telemetry_metrics_splunk",
+        source_ref: "v#{@version}"
+      ],
+      package: [
+        licenses: ["GPL-3.0-or-later"],
+        links: %{"GitHub" => "https://github.com/anthonyshull/telemetry_metrics_splunk"},
       ]
     ]
   end
