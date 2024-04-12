@@ -2,8 +2,6 @@
 
 :rotating_light: This library is in alpha :rotating_light:
 
-<hr />
-
 `Telemetry.Metrics` reporter for Splunk metrics indexes using the Splunk HTTP Event Collector (HEC).
 
 ## Usage
