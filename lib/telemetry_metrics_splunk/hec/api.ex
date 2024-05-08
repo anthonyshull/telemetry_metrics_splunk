@@ -29,7 +29,8 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
   @https_options [
     ssl: [
       verify: :verify_none
-    ]
+    ],
+    timeout: :timer.seconds(5)
   ]
 
   @doc """
@@ -38,13 +39,22 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
   @spec send(map(), TelemetryMetricsSplunk.options(), map()) :: :ok
   def send(measurements, options, metadata \\ %{})
 
-  def send(measurements, [metrics: _, token: token, url: url], metadata) do
-    fields = Map.merge(measurements, metadata)
+  def send(measurements, [metrics: _, token: nil, url: nil], metadata) do
+    create_payload(measurements, metadata)
+    |> Map.put(:module, __MODULE__)
+    |> Logger.info()
+  end
 
-    data =
-      %{event: "metric", time: :erlang.system_time(:millisecond)}
-      |> Map.put(:fields, fields)
-      |> Jason.encode!()
+  def send(measurements, [metrics: _, token: nil, url: _], metadata) do
+    send(measurements, [metrics: [], token: nil, url: nil], metadata)
+  end
+
+  def send(measurements, [metrics: _, token: _, url: nil], metadata) do
+    send(measurements, [metrics: [], token: nil, url: nil], metadata)
+  end
+
+  def send(measurements, [metrics: _, token: token, url: url], metadata) do
+    data = create_payload(measurements, metadata) |> Jason.encode!()
 
     headers = [{~c"authorization", String.to_charlist("Splunk " <> token)}]
 
@@ -52,14 +62,22 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
 
     case response do
       {:ok, result} ->
-        Logger.debug("#{__MODULE__} response_code=#{result |> elem(0) |> elem(1)}")
+        Logger.debug(%{module: __MODULE__, result: result |> elem(0) |> elem(1)})
 
       {:error, reason} ->
-        Logger.warning("#{__MODULE__} error=#{elem(reason, 0)}")
+        Logger.error(%{module: __MODULE__, reason: elem(reason, 0)})
     end
   end
 
   def send(measurements, [token: token, url: url], metadata) do
     send(measurements, [metrics: [], token: token, url: url], metadata)
+  end
+
+  defp create_payload(measurements, metadata) do
+    %{
+      event: "metric",
+      fields: Map.merge(measurements, metadata),
+      time: :erlang.system_time(:millisecond)
+    }
   end
 end

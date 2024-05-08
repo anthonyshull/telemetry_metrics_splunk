@@ -49,7 +49,7 @@ defmodule TelemetryMetricsSplunk do
   alias Telemetry.Metrics
   alias TelemetryMetricsSplunk.Hec.Api
 
-  @type option :: {:metrics, [Metrics.t()]} | {:token, String.t()| {:url, String.t()}}
+  @type option :: {:metrics, [Metrics.t()]} | {:token, String.t() | nil} | {:url, String.t() | nil}
   @type options :: [option()]
 
   @doc """
@@ -100,6 +100,8 @@ defmodule TelemetryMetricsSplunk do
     |> Enum.group_by(& &1.event_name)
     |> Map.keys()
     |> Enum.each(fn event ->
+      Logger.notice(%{module: __MODULE__, subscription: event})
+
       :telemetry.attach({__MODULE__, event, self()}, event, &__MODULE__.handle_event/4, options)
     end)
 
@@ -128,7 +130,8 @@ defmodule TelemetryMetricsSplunk do
   end
 
   defp format_metric(metric, measurements) do
-    %{event_name: event_name, measurement: measurement} = metric
+    %{event_name: event_name} = metric
+    measurement = Map.get(metric, :name) |> List.last()
 
     measurements
     |> Map.get(measurement, 0.0)

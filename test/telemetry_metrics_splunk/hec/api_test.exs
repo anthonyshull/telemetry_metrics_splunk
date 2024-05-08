@@ -66,7 +66,7 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
 
       {:ok, log} = with_log(fn -> Api.send(%{"foo" => :rand.uniform(999)}, @options) end)
 
-      assert log =~ "response_code=200"
+      assert log =~ "result: 200"
     end
 
     test "logs when the request fails", %{bypass: bypass} do
@@ -74,7 +74,7 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
 
       {:ok, log} = with_log(fn -> Api.send(%{"foo" => :rand.uniform(999)}, @options) end)
 
-      assert log =~ "error=failed_connect"
+      assert log =~ "reason: :failed_connect"
     end
   end
 end
