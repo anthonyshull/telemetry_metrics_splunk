@@ -10,7 +10,6 @@ defmodule TelemetryMetricsSplunk.MixProject do
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-
       name: "TelemetryMetricsSplunk",
       description: "Telemetry.Metrics reporter for Splunk metrics indexes using the Splunk HTTP Event Collector (HEC)",
       docs: [
@@ -21,7 +20,7 @@ defmodule TelemetryMetricsSplunk.MixProject do
       ],
       package: [
         licenses: ["GPL-3.0-or-later"],
-        links: %{"GitHub" => "https://github.com/anthonyshull/telemetry_metrics_splunk"},
+        links: %{"GitHub" => "https://github.com/anthonyshull/telemetry_metrics_splunk"}
       ]
     ]
   end

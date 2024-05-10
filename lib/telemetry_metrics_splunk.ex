@@ -2,14 +2,13 @@ defmodule TelemetryMetricsSplunk do
   @moduledoc """
   `Telemetry.Metrics` reporter for Splunk metrics indexes using the Splunk HTTP Event Collector (HEC).
 
-  > **NOTE** All options are required and the order is enforced: `finch`, `metrics`, `token`, `url`.
-
   You can start the reporter with the `start_link/1` function:
 
   ```elixir
     alias Telemetry.Metrics
 
     TelemetryMetricsSplunk.start_link(
+      finch: MyFinch,
       metrics: [
         Metrics.summary("vm.memory.total")
       ],
@@ -63,9 +62,17 @@ defmodule TelemetryMetricsSplunk do
       type: :atom
     ],
     metrics: [
-      type: {:list,
-        {:struct, Metrics.LastValue},
-      }
+      type:
+        {:list,
+         {:or,
+          [
+            {:struct, Metrics.Counter},
+            {:struct, Metrics.Distribution},
+            {:struct, Metrics.LastValue},
+            {:struct, Metrics.Sum},
+            {:struct, Metrics.Summary}
+          ]}},
+      required: true
     ],
     token: [
       type: :string
@@ -75,7 +82,12 @@ defmodule TelemetryMetricsSplunk do
     ]
   ]
 
-  @type options :: [finch: Finch.name() | nil, metrics: list(Metrics.t()), token: String.t() | nil, url: String.t() | nil]
+  @type options :: [
+          finch: Finch.name() | nil,
+          metrics: list(Metrics.t()),
+          token: String.t() | nil,
+          url: String.t() | nil
+        ]
 
   @doc """
   Reporter's child spec.
@@ -124,6 +136,7 @@ defmodule TelemetryMetricsSplunk do
         attach_to_metrics(validated_options)
 
         {:ok, validated_options}
+
       {:error, error} ->
         {:error, error}
     end

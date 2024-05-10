@@ -4,6 +4,8 @@
 
 `Telemetry.Metrics` reporter for Splunk metrics indexes using the Splunk HTTP Event Collector (HEC).
 
+
+
 ## Usage
 
 ```elixir

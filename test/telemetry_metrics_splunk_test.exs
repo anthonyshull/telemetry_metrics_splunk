@@ -18,14 +18,30 @@ defmodule TelemetryMetricsSplunkTest do
     {:ok, bypass: bypass, finch: finch}
   end
 
-  test "allows :finch, :token, and :url to be nil" do
-    Enum.each([:finch, :token, :url], fn key ->
-      options = Keyword.delete(@options, key)
+  describe "options" do
+    test "allows :finch, :token, and :url to be nil" do
+      Enum.each([:finch, :token, :url], fn key ->
+        options = Keyword.delete(@options, key)
 
-      assert {:ok, pid} = Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one, name: __MODULE__)
+        assert {:ok, pid} =
+                 Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one, name: __MODULE__)
 
-      Supervisor.stop(pid)
-    end)
+        Supervisor.stop(pid)
+      end)
+    end
+
+    test "does not allow :metrics to be nil" do
+      options = Keyword.delete(@options, :metrics)
+
+      Process.flag(:trap_exit, true)
+
+      pid =
+        spawn_link(fn ->
+          Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one, name: __MODULE__)
+        end)
+
+      assert_receive {:EXIT, ^pid, _}
+    end
   end
 
   test "sends the metric to splunk", %{bypass: bypass} do
