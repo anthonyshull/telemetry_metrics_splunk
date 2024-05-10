@@ -24,8 +24,6 @@ children = [
 Supervisor.start_link(children, strategy: :one_for_one)
 ```
 
-> **NOTE** All options are required and the order is enforced: `metrics`, `token`, `url`.
-
 ## Installation
 
 Add `telemetry_metrics_splunk` to your list of dependencies in `mix.exs`:

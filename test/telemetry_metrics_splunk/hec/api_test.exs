@@ -79,5 +79,15 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
 
       assert log =~ "reason: :econnrefused"
     end
+
+    test "logs when options are not set" do
+      Enum.each([:finch, :token, :url], fn key ->
+        options = Keyword.delete(@options, key)
+
+        {:ok, log} = with_log(fn -> Api.send(%{"foo" => :rand.uniform(999)}, options) end)
+
+        assert log =~ "module: TelemetryMetricsSplunk.Hec.Api"
+      end)
+    end
   end
 end
