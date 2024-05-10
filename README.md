@@ -10,8 +10,10 @@
 alias Telemetry.Metrics
 
 children = [
+  {Finch, name: MyFinch},
   {
     TelemetryMetricsSplunk, [
+      finch: MyFinch,
       metrics: [
         Metrics.summary("vm.memory.total")
       ],
@@ -31,7 +33,7 @@ Add `telemetry_metrics_splunk` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:telemetry_metrics_splunk, "0.0.1-alpha"}
+    {:telemetry_metrics_splunk, "0.0.3-alpha"}
   ]
 end
 ```
