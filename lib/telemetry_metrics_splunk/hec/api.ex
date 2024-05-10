@@ -35,24 +35,6 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
   @spec send(measurements :: map(), options :: options(), metadata :: map()) :: :ok
   def send(measurements, options, metadata \\ %{})
 
-  def send(measurements, [finch: nil, token: nil, url: nil], metadata) do
-    create_payload(measurements, metadata)
-    |> Map.put(:module, __MODULE__)
-    |> Logger.info()
-  end
-
-  def send(measurements, [finch: nil, token: _, url: _], metadata) do
-    send(measurements, [finch: nil, token: nil, url: nil], metadata)
-  end
-
-  def send(measurements, [finch: _, token: nil, url: _], metadata) do
-    send(measurements, [finch: nil, token: nil, url: nil], metadata)
-  end
-
-  def send(measurements, [finch: _, token: _, url: nil], metadata) do
-    send(measurements, [finch: nil, token: nil, url: nil], metadata)
-  end
-
   def send(measurements, [finch: finch, token: token, url: url], metadata) do
     data = create_payload(measurements, metadata) |> Jason.encode!()
 
@@ -72,8 +54,10 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
     end
   end
 
-  def send(measurements, [token: token, url: url], metadata) do
-    send(measurements, [metrics: [], token: token, url: url], metadata)
+  def send(measurements, _options, metadata) do
+    create_payload(measurements, metadata)
+    |> Map.put(:module, __MODULE__)
+    |> Logger.info()
   end
 
   defp create_payload(measurements, metadata) do
