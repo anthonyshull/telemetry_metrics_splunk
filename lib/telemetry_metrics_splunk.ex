@@ -75,7 +75,7 @@ defmodule TelemetryMetricsSplunk do
     ]
   ]
 
-  @type options :: [finch: Finch.t(), metrics: list(Metrics.t()), token: String.t(), url: String.t()]
+  @type options :: [finch: Finch.name(), metrics: list(Metrics.t()), token: String.t(), url: String.t()]
 
   @doc """
   Reporter's child spec.

@@ -27,7 +27,7 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
 
   require Logger
 
-  @type options :: [finch: Finch.t(), token: String.t(), url: String.t()]
+  @type options :: [finch: Finch.name(), token: String.t(), url: String.t()]
 
   @doc """
   Sends metrics to the Splunk HTTP Event Collector (HEC).
