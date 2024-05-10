@@ -2,7 +2,7 @@ defmodule TelemetryMetricsSplunk do
   @moduledoc """
   `Telemetry.Metrics` reporter for Splunk metrics indexes using the Splunk HTTP Event Collector (HEC).
 
-  > **NOTE** All options are required and the order is enforced: `metrics`, `token`, `url`.
+  > **NOTE** All options are required and the order is enforced: `finch`, `metrics`, `token`, `url`.
 
   You can start the reporter with the `start_link/1` function:
 
@@ -25,7 +25,16 @@ defmodule TelemetryMetricsSplunk do
 
     children = [
       {
+        Finch,
+        name: MyFinch,
+        pools: %{
+          :default => [size: 10],
+          "https://example.splunkcloud.com:8088" => [count: 2, size: 4]
+        }
+      },
+      {
         TelemetryMetricsSplunk, [
+          finch: MyFinch,
           metrics: [
             Metrics.summary("vm.memory.total")
           ],
@@ -49,8 +58,24 @@ defmodule TelemetryMetricsSplunk do
   alias Telemetry.Metrics
   alias TelemetryMetricsSplunk.Hec.Api
 
-  @type option :: {:metrics, [Metrics.t()]} | {:token, String.t() | nil} | {:url, String.t() | nil}
-  @type options :: [option()]
+  @options_schema [
+    finch: [
+      type: :atom
+    ],
+    metrics: [
+      type: {:list,
+        {:struct, Metrics.LastValue},
+      }
+    ],
+    token: [
+      type: :string
+    ],
+    url: [
+      type: :string
+    ]
+  ]
+
+  @type options :: [finch: Finch.t(), metrics: list(Metrics.t()), token: String.t(), url: String.t()]
 
   @doc """
   Reporter's child spec.
@@ -65,7 +90,6 @@ defmodule TelemetryMetricsSplunk do
 
   See `start_link/1` for a list of available options.
   """
-  @spec child_spec(options) :: Supervisor.child_spec()
   def child_spec(options) do
     %{id: __MODULE__, start: {__MODULE__, :start_link, [options]}}
   end
@@ -85,27 +109,24 @@ defmodule TelemetryMetricsSplunk do
     )
   ```
   """
-  @spec start_link(options) :: GenServer.on_start()
+  @spec start_link(options :: options()) :: GenServer.on_start()
   def start_link(options) do
-    GenServer.start_link(__MODULE__, options)
+    GenServer.start_link(__MODULE__, options, name: __MODULE__)
   end
 
   @impl GenServer
-  @spec init(options) :: {:ok, [{any(), any()}]}
+  @spec init(options :: options()) :: {:ok, options()} | {:error, term()}
   def init(options) do
     Process.flag(:trap_exit, true)
 
-    options
-    |> Keyword.fetch!(:metrics)
-    |> Enum.group_by(& &1.event_name)
-    |> Map.keys()
-    |> Enum.each(fn event ->
-      Logger.notice(%{module: __MODULE__, subscription: event})
+    case NimbleOptions.validate(options, @options_schema) do
+      {:ok, validated_options} ->
+        attach_to_metrics(validated_options)
 
-      :telemetry.attach({__MODULE__, event, self()}, event, &__MODULE__.handle_event/4, options)
-    end)
-
-    {:ok, options}
+        {:ok, validated_options}
+      {:error, error} ->
+        {:error, error}
+    end
   end
 
   @impl GenServer
@@ -120,13 +141,30 @@ defmodule TelemetryMetricsSplunk do
   @doc """
   Handles a telemetry event by normalizing it and sending it to the Splunk HEC.
   """
-  @spec handle_event(any(), any(), map(), options) :: :ok
+  @spec handle_event(atom(), map(), map(), options()) :: :ok
   def handle_event(_event_name, measurements, metadata, options) do
-    options
-    |> Keyword.get(:metrics, [])
+    {metrics, client_options} = Keyword.pop(options, :metrics, [])
+
+    metrics
     |> Enum.map(&format_metric(&1, measurements))
     |> Map.new(fn {k, v} -> {k, v} end)
-    |> Api.send(options, metadata)
+    |> Api.send(client_options, metadata)
+  end
+
+  defp attach_to_metrics(options) do
+    options
+    |> Keyword.get(:metrics)
+    |> Enum.group_by(& &1.event_name)
+    |> Map.keys()
+    |> Enum.each(fn event ->
+      Logger.notice(%{module: __MODULE__, subscription: event})
+
+      :telemetry.attach({__MODULE__, event, self()}, event, &__MODULE__.handle_event/4, options)
+    end)
+  end
+
+  defp format_measurement(event_name, key, metric) do
+    "metric_name:#{metric_name(event_name)}.#{measurement_name(key)}.#{metric_type(metric)}"
   end
 
   defp format_metric(metric, measurements) do
@@ -156,9 +194,5 @@ defmodule TelemetryMetricsSplunk do
     |> String.split(".")
     |> List.last()
     |> Recase.to_snake()
-  end
-
-  defp format_measurement(event_name, key, metric) do
-    "metric_name:#{metric_name(event_name)}.#{measurement_name(key)}.#{metric_type(metric)}"
   end
 end

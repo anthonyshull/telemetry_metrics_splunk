@@ -5,14 +5,17 @@ defmodule TelemetryMetricsSplunkTest do
 
   @port 9999
   @options [
+    finch: TestFinch,
+    metrics: [],
     token: "00000000-0000-0000-0000-000000000000",
     url: "http://localhost:#{@port}/services/collector"
   ]
 
   setup do
     bypass = Bypass.open(port: @port)
+    finch = Finch.start_link(name: @options[:finch])
 
-    {:ok, bypass: bypass}
+    {:ok, bypass: bypass, finch: finch}
   end
 
   test "sends the metric to splunk", %{bypass: bypass} do
