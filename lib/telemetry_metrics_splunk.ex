@@ -102,6 +102,7 @@ defmodule TelemetryMetricsSplunk do
 
   See `start_link/1` for a list of available options.
   """
+  @spec child_spec(options :: options()) :: Supervisor.child_spec()
   def child_spec(options) do
     %{id: __MODULE__, start: {__MODULE__, :start_link, [options]}}
   end
@@ -113,6 +114,7 @@ defmodule TelemetryMetricsSplunk do
     alias Telemetry.Metrics
 
     TelemetryMetricsSplunk.start_link(
+      finch: MyFinch,
       metrics: [
         Metrics.summary("vm.memory.total")
       ]
