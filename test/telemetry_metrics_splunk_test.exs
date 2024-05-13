@@ -5,14 +5,43 @@ defmodule TelemetryMetricsSplunkTest do
 
   @port 9999
   @options [
+    finch: TestFinch,
+    metrics: [],
     token: "00000000-0000-0000-0000-000000000000",
     url: "http://localhost:#{@port}/services/collector"
   ]
 
   setup do
     bypass = Bypass.open(port: @port)
+    finch = Finch.start_link(name: @options[:finch])
 
-    {:ok, bypass: bypass}
+    {:ok, bypass: bypass, finch: finch}
+  end
+
+  describe "options" do
+    test "allows :finch, :token, and :url to be nil" do
+      Enum.each([:finch, :token, :url], fn key ->
+        options = Keyword.delete(@options, key)
+
+        assert {:ok, pid} =
+                 Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one, name: __MODULE__)
+
+        Supervisor.stop(pid)
+      end)
+    end
+
+    test "does not allow :metrics to be nil" do
+      options = Keyword.delete(@options, :metrics)
+
+      Process.flag(:trap_exit, true)
+
+      pid =
+        spawn_link(fn ->
+          Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one, name: __MODULE__)
+        end)
+
+      assert_receive {:EXIT, ^pid, _}
+    end
   end
 
   test "sends the metric to splunk", %{bypass: bypass} do

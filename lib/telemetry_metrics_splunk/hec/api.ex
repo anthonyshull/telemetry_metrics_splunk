@@ -10,6 +10,7 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
   }
 
   options = [
+    finch: MyFinch,
     token: "00000000-0000-0000-0000-000000000000",
     url: "https://example.splunkcloud.com:8088/services/collector"
   ]
@@ -26,51 +27,37 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
 
   require Logger
 
-  @https_options [
-    ssl: [
-      verify: :verify_none
-    ],
-    timeout: :timer.seconds(5)
-  ]
+  @type options :: [finch: Finch.name(), token: String.t(), url: String.t()]
 
   @doc """
   Sends metrics to the Splunk HTTP Event Collector (HEC).
   """
-  @spec send(map(), TelemetryMetricsSplunk.options(), map()) :: :ok
+  @spec send(measurements :: map(), options :: options(), metadata :: map()) :: :ok
   def send(measurements, options, metadata \\ %{})
 
-  def send(measurements, [metrics: _, token: nil, url: nil], metadata) do
-    create_payload(measurements, metadata)
-    |> Map.put(:module, __MODULE__)
-    |> Logger.info()
-  end
-
-  def send(measurements, [metrics: _, token: nil, url: _], metadata) do
-    send(measurements, [metrics: [], token: nil, url: nil], metadata)
-  end
-
-  def send(measurements, [metrics: _, token: _, url: nil], metadata) do
-    send(measurements, [metrics: [], token: nil, url: nil], metadata)
-  end
-
-  def send(measurements, [metrics: _, token: token, url: url], metadata) do
+  def send(measurements, [finch: finch, token: token, url: url], metadata) do
     data = create_payload(measurements, metadata) |> Jason.encode!()
 
-    headers = [{~c"authorization", String.to_charlist("Splunk " <> token)}]
+    headers = [
+      {"authorization", "Splunk " <> token},
+      {"content-type", "application/json"}
+    ]
 
-    response = :httpc.request(:post, {String.to_charlist(url), headers, ~c"application/json", data}, @https_options, [])
+    response = Finch.build(:post, url, headers, data) |> Finch.request(finch)
 
     case response do
       {:ok, result} ->
-        Logger.debug(%{module: __MODULE__, result: result |> elem(0) |> elem(1)})
+        Logger.debug(%{module: __MODULE__, status: result.status})
 
       {:error, reason} ->
-        Logger.error(%{module: __MODULE__, reason: elem(reason, 0)})
+        Logger.error(%{module: __MODULE__, reason: reason})
     end
   end
 
-  def send(measurements, [token: token, url: url], metadata) do
-    send(measurements, [metrics: [], token: token, url: url], metadata)
+  def send(measurements, _options, metadata) do
+    create_payload(measurements, metadata)
+    |> Map.put(:module, __MODULE__)
+    |> Logger.info()
   end
 
   defp create_payload(measurements, metadata) do

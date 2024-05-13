@@ -8,6 +8,7 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
   @port 9999
   @route "/services/collector"
   @options [
+    finch: TestFinch,
     token: "00000000-0000-0000-0000-000000000000",
     url: "http://localhost:#{@port}#{@route}"
   ]
@@ -15,7 +16,9 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
   setup do
     bypass = Bypass.open(port: @port)
 
-    {:ok, bypass: bypass}
+    finch = Finch.start_link(name: @options[:finch])
+
+    {:ok, bypass: bypass, finch: finch}
   end
 
   describe "send/2" do
@@ -66,7 +69,7 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
 
       {:ok, log} = with_log(fn -> Api.send(%{"foo" => :rand.uniform(999)}, @options) end)
 
-      assert log =~ "result: 200"
+      assert log =~ "status: 200"
     end
 
     test "logs when the request fails", %{bypass: bypass} do
@@ -74,7 +77,17 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
 
       {:ok, log} = with_log(fn -> Api.send(%{"foo" => :rand.uniform(999)}, @options) end)
 
-      assert log =~ "reason: :failed_connect"
+      assert log =~ "reason: :econnrefused"
+    end
+
+    test "logs when options are not set" do
+      Enum.each([:finch, :token, :url], fn key ->
+        options = Keyword.delete(@options, key)
+
+        {:ok, log} = with_log(fn -> Api.send(%{"foo" => :rand.uniform(999)}, options) end)
+
+        assert log =~ "module: TelemetryMetricsSplunk.Hec.Api"
+      end)
     end
   end
 end
