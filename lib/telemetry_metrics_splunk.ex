@@ -214,7 +214,7 @@ defmodule TelemetryMetricsSplunk do
 
   defp possibly_warn(options) do
     if Enum.any?([:finch, :token, :url], &Keyword.get(options, &1) == nil) do
-      Logger.warning(%{module: __MODULE__, message: "Splunk HEC settings are not set. Metrics will not be sent to Splunk."})
+      Logger.notice(%{module: __MODULE__, message: "Splunk HEC settings are not set. Metrics will not be sent to Splunk."})
     end
   end
 end
