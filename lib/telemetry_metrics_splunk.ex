@@ -136,6 +136,7 @@ defmodule TelemetryMetricsSplunk do
     case NimbleOptions.validate(options, @options_schema) do
       {:ok, validated_options} ->
         attach_to_metrics(validated_options)
+        possibly_warn(validated_options)
 
         {:ok, validated_options}
 
@@ -209,5 +210,11 @@ defmodule TelemetryMetricsSplunk do
     |> String.split(".")
     |> List.last()
     |> Recase.to_snake()
+  end
+
+  defp possibly_warn(options) do
+    if Enum.any?([:finch, :token, :url], &Keyword.get(options, &1) == nil) do
+      Logger.warning(%{module: __MODULE__, message: "Splunk HEC settings are not set. Metrics will not be sent to Splunk."})
+    end
   end
 end
