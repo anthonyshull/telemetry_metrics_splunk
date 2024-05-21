@@ -1,6 +1,6 @@
 # TelemetryMetricsSplunk
 
-[![Version](https://img.shields.io/hexpm/v/req.svg)](https://hex.pm/packages/req)
+[![Version](https://img.shields.io/hexpm/v/telemetry_metrics_splunk.svg)](https://hex.pm/packages/telemetry_metrics_splunk)
 
 :rotating_light: This library is in alpha :rotating_light:
 
