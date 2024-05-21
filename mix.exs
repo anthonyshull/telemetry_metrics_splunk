@@ -1,7 +1,7 @@
 defmodule TelemetryMetricsSplunk.MixProject do
   use Mix.Project
 
-  @version "0.0.3-alpha"
+  @version "0.0.4-alpha"
 
   def project do
     [
