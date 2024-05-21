@@ -1,5 +1,7 @@
 # TelemetryMetricsSplunk
 
+[![Version](https://img.shields.io/hexpm/v/req.svg)](https://hex.pm/packages/req)
+
 :rotating_light: This library is in alpha :rotating_light:
 
 `Telemetry.Metrics` reporter for Splunk metrics indexes using the Splunk HTTP Event Collector (HEC).
@@ -33,7 +35,7 @@ Add `telemetry_metrics_splunk` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:telemetry_metrics_splunk, "0.0.3-alpha"}
+    {:telemetry_metrics_splunk, "~> 0.0.0"}
   ]
 end
 ```
