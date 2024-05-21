@@ -27,13 +27,33 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
 
   require Logger
 
-  @type options :: [finch: Finch.name(), token: String.t(), url: String.t()]
+  @type options :: [finch: Finch.name() | nil, token: String.t() | nil, url: String.t() | nil]
 
   @doc """
   Sends metrics to the Splunk HTTP Event Collector (HEC).
+
+  If `finch`, `token`, or `url` are `nil`, the function will log the info and not send the metrics.
   """
   @spec send(measurements :: map(), options :: options(), metadata :: map()) :: :ok
   def send(measurements, options, metadata \\ %{})
+
+  def send(measurements, [finch: nil, token: nil, url: nil], metadata) do
+    create_payload(measurements, metadata)
+    |> Map.put(:module, __MODULE__)
+    |> Logger.info()
+  end
+
+  def send(measurements, [finch: _finch, token: nil, url: _url], metadata) do
+    send(measurements, [finch: nil, token: nil, url: nil], metadata)
+  end
+
+  def send(measurements, [finch: _finch, token: _token, url: nil], metadata) do
+    send(measurements, [finch: nil, token: nil, url: nil], metadata)
+  end
+
+  def send(measurements, [finch: nil, token: _token, url: _url], metadata) do
+    send(measurements, [finch: nil, token: nil, url: nil], metadata)
+  end
 
   def send(measurements, [finch: finch, token: token, url: url], metadata) do
     data = create_payload(measurements, metadata) |> Jason.encode!()
@@ -55,9 +75,7 @@ defmodule TelemetryMetricsSplunk.Hec.Api do
   end
 
   def send(measurements, _options, metadata) do
-    create_payload(measurements, metadata)
-    |> Map.put(:module, __MODULE__)
-    |> Logger.info()
+    send(measurements, [finch: nil, token: nil, url: nil], metadata)
   end
 
   defp create_payload(measurements, metadata) do
