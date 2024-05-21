@@ -59,7 +59,8 @@ defmodule TelemetryMetricsSplunk do
 
   @options_schema [
     finch: [
-      type: :atom
+      type: {:or, [:atom, :nil]},
+      required: false
     ],
     metrics: [
       type:
@@ -75,10 +76,12 @@ defmodule TelemetryMetricsSplunk do
       required: true
     ],
     token: [
-      type: :string
+      type: {:or, [:string, :nil]},
+      required: false
     ],
     url: [
-      type: :string
+      type: {:or, [:string, :nil]},
+      required: false
     ]
   ]
 
@@ -125,7 +128,7 @@ defmodule TelemetryMetricsSplunk do
   """
   @spec start_link(options :: options()) :: GenServer.on_start()
   def start_link(options) do
-    GenServer.start_link(__MODULE__, options, name: __MODULE__)
+    GenServer.start_link(__MODULE__, options)
   end
 
   @impl GenServer

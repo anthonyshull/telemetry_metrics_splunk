@@ -5,7 +5,7 @@ defmodule TelemetryMetricsSplunkTest do
 
   @port 9999
   @options [
-    finch: TestFinch,
+    finch: Test.Finch,
     metrics: [],
     token: "00000000-0000-0000-0000-000000000000",
     url: "http://localhost:#{@port}/services/collector"
@@ -18,13 +18,18 @@ defmodule TelemetryMetricsSplunkTest do
     {:ok, bypass: bypass, finch: finch}
   end
 
+  test "allows two instances to be started" do
+    assert {:ok, _} = Supervisor.start_link([{TelemetryMetricsSplunk, @options}], strategy: :one_for_one)
+    assert {:ok, _} = Supervisor.start_link([{TelemetryMetricsSplunk, @options}], strategy: :one_for_one)
+  end
+
   describe "options" do
     test "allows :finch, :token, and :url to be nil" do
       Enum.each([:finch, :token, :url], fn key ->
         options = Keyword.delete(@options, key)
 
         assert {:ok, pid} =
-                 Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one, name: __MODULE__)
+                 Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one)
 
         Supervisor.stop(pid)
       end)
@@ -37,7 +42,7 @@ defmodule TelemetryMetricsSplunkTest do
 
       pid =
         spawn_link(fn ->
-          Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one, name: __MODULE__)
+          Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one)
         end)
 
       assert_receive {:EXIT, ^pid, _}
@@ -49,7 +54,7 @@ defmodule TelemetryMetricsSplunkTest do
 
     options = Keyword.put(@options, :metrics, [Metrics.last_value("foo.bar.baz")])
 
-    Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one, name: __MODULE__)
+    Supervisor.start_link([{TelemetryMetricsSplunk, options}], strategy: :one_for_one)
 
     Bypass.expect_once(bypass, "POST", "/services/collector", fn conn ->
       {:ok, body, conn} = Plug.Conn.read_body(conn, read_timeout: 500)
