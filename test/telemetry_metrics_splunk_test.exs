@@ -6,6 +6,7 @@ defmodule TelemetryMetricsSplunkTest do
   @port 9999
   @options [
     finch: Test.Finch,
+    index: nil,
     metrics: [],
     token: "00000000-0000-0000-0000-000000000000",
     url: "http://localhost:#{@port}/services/collector"

@@ -16,6 +16,7 @@ children = [
   {
     TelemetryMetricsSplunk, [
       finch: MyFinch,
+      index: "main",
       metrics: [
         Metrics.summary("vm.memory.total")
       ],
