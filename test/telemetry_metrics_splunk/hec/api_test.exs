@@ -9,6 +9,7 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
   @route "/services/collector"
   @options [
     finch: TestFinch,
+    index: nil,
     token: "00000000-0000-0000-0000-000000000000",
     url: "http://localhost:#{@port}#{@route}"
   ]
@@ -62,6 +63,21 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
       Api.send(%{"metric_name:foo" => :rand.uniform(999)}, @options, %{"foo" => "bar"})
     end
 
+    test "adds the index to the payload", %{bypass: bypass} do
+      Bypass.expect_once(bypass, "POST", @route, fn conn ->
+        {:ok, body, conn} = Plug.Conn.read_body(conn, read_timeout: 500)
+        data = Jason.decode!(body)
+
+        assert data["index"] == "main"
+
+        Plug.Conn.resp(conn, 200, "ok")
+      end)
+
+      options = Keyword.update(@options, :index, "main", fn _ -> "main" end)
+
+      Api.send(%{"metric_name:foo" => :rand.uniform(999)}, options, %{"foo" => "bar"})
+    end
+
     test "logs when the request is successful", %{bypass: bypass} do
       Bypass.expect_once(bypass, "POST", @route, fn conn ->
         Plug.Conn.resp(conn, 200, "ok")
@@ -82,12 +98,18 @@ defmodule TelemetryMetricsSplunk.Hec.ApiTest do
 
     test "logs when options are not set" do
       Enum.each([:finch, :token, :url], fn key ->
-        options = Keyword.delete(@options, key)
+        options = Keyword.update(@options, key, nil, fn _ -> nil end)
 
         {:ok, log} = with_log(fn -> Api.send(%{"foo" => :rand.uniform(999)}, options) end)
 
         assert log =~ "module: TelemetryMetricsSplunk.Hec.Api"
       end)
+    end
+
+    test "logs when no options are set" do
+      {:ok, log} = with_log(fn -> Api.send(%{"foo" => :rand.uniform(999)}, []) end)
+
+      assert log =~ "module: TelemetryMetricsSplunk.Hec.Api"
     end
   end
 end

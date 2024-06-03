@@ -9,6 +9,7 @@ defmodule TelemetryMetricsSplunk do
 
     TelemetryMetricsSplunk.start_link(
       finch: MyFinch,
+      index: "main",
       metrics: [
         Metrics.summary("vm.memory.total")
       ],
@@ -34,6 +35,7 @@ defmodule TelemetryMetricsSplunk do
       {
         TelemetryMetricsSplunk, [
           finch: MyFinch,
+          index: "main",
           metrics: [
             Metrics.summary("vm.memory.total")
           ],
@@ -59,7 +61,11 @@ defmodule TelemetryMetricsSplunk do
 
   @options_schema [
     finch: [
-      type: {:or, [:atom, :nil]},
+      type: {:or, [:atom, nil]},
+      required: false
+    ],
+    index: [
+      type: {:or, [:string, nil]},
       required: false
     ],
     metrics: [
@@ -76,17 +82,18 @@ defmodule TelemetryMetricsSplunk do
       required: true
     ],
     token: [
-      type: {:or, [:string, :nil]},
+      type: {:or, [:string, nil]},
       required: false
     ],
     url: [
-      type: {:or, [:string, :nil]},
+      type: {:or, [:string, nil]},
       required: false
     ]
   ]
 
   @type options :: [
           finch: Finch.name() | nil,
+          index: String.t() | nil,
           metrics: list(Metrics.t()),
           token: String.t() | nil,
           url: String.t() | nil
@@ -118,6 +125,7 @@ defmodule TelemetryMetricsSplunk do
 
     TelemetryMetricsSplunk.start_link(
       finch: MyFinch,
+      index: "main",
       metrics: [
         Metrics.summary("vm.memory.total")
       ]
@@ -216,8 +224,11 @@ defmodule TelemetryMetricsSplunk do
   end
 
   defp possibly_warn(options) do
-    if Enum.any?([:finch, :token, :url], &Keyword.get(options, &1) == nil) do
-      Logger.notice(%{module: __MODULE__, message: "Splunk HEC settings are not set. Metrics will not be sent to Splunk."})
+    if Enum.any?([:finch, :token, :url], &(Keyword.get(options, &1) == nil)) do
+      Logger.notice(%{
+        module: __MODULE__,
+        message: "Splunk HEC settings are not set. Metrics will not be sent to Splunk."
+      })
     end
   end
 end

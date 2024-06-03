@@ -1,7 +1,7 @@
 defmodule TelemetryMetricsSplunk.MixProject do
   use Mix.Project
 
-  @version "0.0.4-alpha"
+  @version "0.0.5-alpha"
 
   def project do
     [
@@ -21,7 +21,8 @@ defmodule TelemetryMetricsSplunk.MixProject do
       package: [
         licenses: ["GPL-3.0-or-later"],
         links: %{"GitHub" => "https://github.com/anthonyshull/telemetry_metrics_splunk"}
-      ]
+      ],
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -35,9 +36,10 @@ defmodule TelemetryMetricsSplunk.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:bypass, "2.1.0", only: [:test]},
+      {:bypass, "2.1.0", only: [:test], runtime: false},
       {:credo, "1.7.5", only: [:dev], runtime: false},
       {:ex_doc, "0.32.0", only: [:dev], runtime: false},
+      {:excoveralls, "0.18.1", only: [:test], runtime: false},
       {:finch, "0.18.0"},
       {:dialyxir, "1.4.3", only: [:dev], runtime: false},
       {:jason, "1.4.1"},
