@@ -36,10 +36,10 @@ defmodule TelemetryMetricsSplunk.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:bypass, "2.1.0", only: [:test], runtime: false},
+      {:bypass, "2.1.0", only: [:test]},
       {:credo, "1.7.5", only: [:dev], runtime: false},
       {:ex_doc, "0.32.0", only: [:dev], runtime: false},
-      {:excoveralls, "0.18.1", only: [:test], runtime: false},
+      {:excoveralls, "0.18.1", only: [:test]},
       {:finch, "~> 0.18"},
       {:dialyxir, "1.4.3", only: [:dev], runtime: false},
       {:jason, "~> 1.4"},
