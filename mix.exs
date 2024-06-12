@@ -40,13 +40,13 @@ defmodule TelemetryMetricsSplunk.MixProject do
       {:credo, "1.7.5", only: [:dev], runtime: false},
       {:ex_doc, "0.32.0", only: [:dev], runtime: false},
       {:excoveralls, "0.18.1", only: [:test], runtime: false},
-      {:finch, "0.18.0"},
+      {:finch, "~> 0.18"},
       {:dialyxir, "1.4.3", only: [:dev], runtime: false},
-      {:jason, "1.4.1"},
-      {:nimble_options, "1.1.0"},
-      {:recase, "0.7.0"},
-      {:telemetry, "1.2.1"},
-      {:telemetry_metrics, "1.0.0"}
+      {:jason, "~> 1.4"},
+      {:nimble_options, "~> 1.1"},
+      {:recase, "~> 0.8"},
+      {:telemetry, "~> 1.2"},
+      {:telemetry_metrics, "~> 1.0"}
     ]
   end
 end
